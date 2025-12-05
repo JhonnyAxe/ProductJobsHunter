@@ -15,9 +15,9 @@
 
 ## 👨‍💻 Автор
 
-**SergD (Sergei Dyshkant)**
-- Telegram: [@sergei_dyshkant](https://t.me/sergei_dyshkant)
-- GitHub: [github.com/SergD](https://github.com/SergD)
+**JhonnyAxe**
+- Telegram: [@jhonnyaxe](https://t.me/jhonnyaxe)
+- GitHub: [github.com/JhonnyAxe](https://github.com/JhonnyAxe)
 
 ## 🌟 О проекте
 
@@ -129,10 +129,10 @@ python new_vacancies_parser_channels.py
 
 ## 📝 Лицензия
 
-MIT License © 2024 [SergD (Sergei Dyshkant)](https://t.me/sergei_dyshkant)
+MIT License © 2024 [JhonnyAxe](https://t.me/jhonnyaxe)
 
 ## 👏 Благодарности
 
-Разработано [SergD (Sergei Dyshkant)](https://t.me/sergei_dyshkant)
+Разработано [JhonnyAxe](https://t.me/jhonnyaxe)
 
 Если у вас есть вопросы или предложения, пишите мне в Telegram!
