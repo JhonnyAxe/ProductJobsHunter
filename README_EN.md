@@ -15,9 +15,9 @@ English | [Русский](README.md)
 
 ## 👨‍💻 Author
 
-**SergD (Sergei Dyshkant)**
-- Telegram: [@sergei_dyshkant](https://t.me/sergei_dyshkant)
-- GitHub: [github.com/SergD](https://github.com/SergD)
+**JhonnyAxe**
+- Telegram: [@jhonnyaxe](https://t.me/jhonnyaxe)
+- GitHub: [github.com/JhonnyAxe](https://github.com/JhonnyAxe)
 
 ## 🌟 About
 
@@ -129,10 +129,10 @@ All settings are stored in three files:
 
 ## 📝 License
 
-MIT License © 2024 [SergD (Sergei Dyshkant)](https://t.me/sergei_dyshkant)
+MIT License © 2024 [JhonnyAxe](https://t.me/jhonnyaxe)
 
 ## 👏 Acknowledgments
 
-Developed by [SergD (Sergei Dyshkant)](https://t.me/sergei_dyshkant)
+Developed by [JhonnyAxe](https://t.me/jhonnyaxe)
 
 If you have any questions or suggestions, contact me on Telegram!
