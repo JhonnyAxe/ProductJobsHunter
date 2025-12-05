@@ -1,5 +1,5 @@
 """
-Скрипт для мониторинга новых SEO вакансий из Telegram каналов
+Скрипт для мониторинга новых вакансий продуктовых менеджеров из Telegram каналов
 """
 
 import asyncio
@@ -12,16 +12,16 @@ from dotenv import load_dotenv
 
 # Импорт локальных модулей
 from parse_channels import analyze_message as original_analyze_message
-from parse_channels import is_seo_vacancy as original_is_seo_vacancy
+from parse_channels import is_product_vacancy as original_is_product_vacancy
 from telegram_notifier import send_vacancy_notification
-from seo_channels import SEO_CHANNELS
+from product_channels import PRODUCT_CHANNELS
 
 # Загрузка переменных окружения
 load_dotenv()
 API_ID = os.getenv('API_ID')
 API_HASH = os.getenv('API_HASH')
 PHONE = os.getenv('PHONE')
-SEO_FILE = 'seo_vacancies.xlsx'
+PRODUCT_FILE = 'product_vacancies.xlsx'
 
 # Инициализация логгера
 logger.add(
@@ -34,10 +34,10 @@ logger.add(
 async def is_message_processed(channel_id: int, message_id: int) -> bool:
     """Проверка, было ли сообщение уже обработано"""
     try:
-        if not os.path.exists(SEO_FILE):
+        if not os.path.exists(PRODUCT_FILE):
             return False
-            
-        df = pd.read_excel(SEO_FILE)
+
+        df = pd.read_excel(PRODUCT_FILE)
         
         # Проверяем наличие нужных столбцов
         if 'channel_id' not in df.columns or 'message_id' not in df.columns:
@@ -57,8 +57,8 @@ async def save_vacancy_to_excel(vacancy_data: dict):
             return
             
         # Загружаем существующий Excel файл или создаем новый DataFrame
-        if os.path.exists(SEO_FILE):
-            df = pd.read_excel(SEO_FILE)
+        if os.path.exists(PRODUCT_FILE):
+            df = pd.read_excel(PRODUCT_FILE)
             # Проверяем наличие нужных столбцов
             if 'channel_id' not in df.columns:
                 df['channel_id'] = None
@@ -72,12 +72,12 @@ async def save_vacancy_to_excel(vacancy_data: dict):
                               (df['message_id'] == vacancy_data['message_id'])):
             
             # Добавляем новую вакансию
-            vacancy_data['contains_seo_vacancy'] = True  # Добавляем флаг SEO вакансии
+            vacancy_data['contains_product_vacancy'] = True  # Добавляем флаг продуктовой вакансии
             new_df = pd.DataFrame([vacancy_data])
             df = pd.concat([df, new_df], ignore_index=True)
             
             # Сохраняем обновленный файл
-            df.to_excel(SEO_FILE, index=False)
+            df.to_excel(PRODUCT_FILE, index=False)
             logger.info("💾 Вакансия сохранена в Excel")
         else:
             logger.debug("ℹ️ Вакансия уже существует в Excel")
@@ -92,7 +92,7 @@ async def check_recent_messages(client, channel_id: int):
         logger.debug(f"🕒 Проверяем сообщения с {week_ago} для канала {channel_id}")
         
         message_count = 0
-        seo_count = 0
+        product_count = 0
         
         # Получаем сообщения из канала (увеличиваем лимит до 1000)
         channel_name = ""
@@ -116,26 +116,26 @@ async def check_recent_messages(client, channel_id: int):
                     continue
                     
                 # Проверяем наличие ключевых слов
-                keywords = ['seo', 'сео', 'сэо']
+                keywords = ['product', 'product manager', 'product owner', 'продакт', 'продукт']
                 found_keywords = [kw for kw in keywords if kw in message_text.lower()]
                 if found_keywords:
                     logger.info(f"🔍 Найдены ключевые слова {', '.join(found_keywords)} в сообщении {message.id} в канале {channel_name}")
                     
                 logger.debug(f"📝 Проверяем сообщение {message.id} из канала {channel_id}")
                 
-                # Проверяем наличие слова SEO в разных вариантах написания
-                if any(variant in message_text.lower() for variant in ['seo', 'сео', 'сэо']):
-                    seo_count += 1
-                    logger.info(f"🔍 Найдено сообщение с SEO за последние 7 дней в канале {channel_id}")
-                    
-                    # Проверка на SEO-релевантность
-                    is_seo, reason = original_is_seo_vacancy(message_text)
-                    if is_seo:
+                # Проверяем наличие продуктовых ключевых слов
+                if any(variant in message_text.lower() for variant in ['product', 'product manager', 'product owner', 'продакт']):
+                    product_count += 1
+                    logger.info(f"🔍 Найдено сообщение про продуктовую роль за последние 7 дней в канале {channel_id}")
+
+                    # Проверка на релевантность продуктовой роли
+                    is_product, reason = original_is_product_vacancy(message_text)
+                    if is_product:
                         try:
                             # Анализ через GPT
                             analysis_result = original_analyze_message(message_text)
                             
-                            if isinstance(analysis_result, dict) and analysis_result.get('is_seo', False):
+                            if isinstance(analysis_result, dict) and analysis_result.get('is_product', False):
                                 # Подготовка данных
                                 vacancy_data = {
                                     'text': message_text,
@@ -166,7 +166,7 @@ async def monitor_new_vacancies():
     
     # Инициализация клиента
     logger.info(f"🔑 Инициализация Telegram клиента (API ID: {API_ID})")
-    client = TelegramClient('seo_parser_session', API_ID, API_HASH)
+    client = TelegramClient('product_parser_session', API_ID, API_HASH)
     
     # Подготовка списка каналов
     channels_to_monitor = []
@@ -182,8 +182,8 @@ async def monitor_new_vacancies():
         
         logger.info("✅ Успешно подключились к Telegram")
         
-        # Получаем ID всех каналов из SEO_CHANNELS
-        for channel in SEO_CHANNELS:
+        # Получаем ID всех каналов из PRODUCT_CHANNELS
+        for channel in PRODUCT_CHANNELS:
             try:
                 entity = await client.get_entity(channel['username'])
                 channels_to_monitor.append(entity.id)
@@ -216,12 +216,12 @@ async def monitor_new_vacancies():
                 
                 logger.info(f"💬 Новое сообщение из канала {event.chat_id}")
                 
-                # Проверяем наличие слова SEO в тексте
-                if any(variant in message_text.lower() for variant in ['seo', 'сео', 'сэо']):
-                    # Проверка на SEO-релевантность
-                    is_seo, reason = original_is_seo_vacancy(message_text)
-                    if is_seo:
-                        logger.info(f"🔍 Найдена потенциальная SEO вакансия: {reason}")
+                # Проверяем наличие продукта в тексте
+                if any(variant in message_text.lower() for variant in ['product', 'product manager', 'product owner', 'продакт']):
+                    # Проверка на продуктовую релевантность
+                    is_product, reason = original_is_product_vacancy(message_text)
+                    if is_product:
+                        logger.info(f"🔍 Найдена потенциальная продуктовая вакансия: {reason}")
                     
                         try:
                             # Анализ сообщения через GPT
@@ -231,7 +231,7 @@ async def monitor_new_vacancies():
                             # Проверяем результат анализа
                             logger.debug(f"🔍 Результат анализа: {analysis_result}")
                             
-                            if isinstance(analysis_result, dict) and analysis_result.get('is_seo', False):
+                            if isinstance(analysis_result, dict) and analysis_result.get('is_product', False):
                                 logger.info(f"✅ Вакансия подтверждена GPT: {analysis_result.get('reason', 'No reason provided')}")
                                 
                                 # Подготовка данных
@@ -258,9 +258,9 @@ async def monitor_new_vacancies():
                         except Exception as e:
                             logger.error(f"❌ Ошибка при анализе GPT: {str(e)}")
                     else:
-                        logger.debug(f"❌ Сообщение не прошло проверку SEO: {reason}")
+                        logger.debug(f"❌ Сообщение не прошло проверку product: {reason}")
                 else:
-                    logger.debug("❌ Сообщение не содержит SEO")
+                    logger.debug("❌ Сообщение не содержит product-ключей")
             except Exception as e:
                 logger.error(f"❌ Ошибка при обработке сообщения: {str(e)}")
         

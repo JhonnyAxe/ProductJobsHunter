@@ -1,13 +1,13 @@
 <div align="center">
 
-# 🔍 SEO Jobs Hunter
+# 🔍 Product Jobs Hunter
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![Telegram](https://img.shields.io/badge/Telegram-Bot-blue.svg)](https://core.telegram.org/bots)
 [![OpenAI](https://img.shields.io/badge/OpenAI-GPT-green.svg)](https://platform.openai.com/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-### Smart SEO Job Parser from Telegram with GPT Analysis
+### Smart Product Manager Job Parser from Telegram with GPT Analysis
 
 English | [Русский](README.md)
 
@@ -21,14 +21,14 @@ English | [Русский](README.md)
 
 ## 🌟 About
 
-SEO Jobs Hunter is a smart tool for monitoring and analyzing SEO job vacancies in Telegram channels. It uses GPT to determine the relevance of vacancies and automatically sends notifications about new job offers.
+Product Jobs Hunter is a smart tool for monitoring and analyzing Product Manager vacancies in Telegram channels. It uses GPT to determine the relevance of vacancies and automatically sends notifications about new job offers.
 
 ### ✨ Features
-- 🤖 **AI-Powered Analysis** - Uses GPT to evaluate job relevance
+- 🤖 **AI-Powered Analysis** - Uses GPT to evaluate Product Manager relevance
 - 🔄 **Real-time Updates** - Instant notifications about new vacancies
 - 📊 **Smart Filtering** - Automatic salary and requirements detection
 - 💾 **Excel Export** - Save all vacancies in a convenient format
-- 🔍 **Smart Search** - Recognition of various 'SEO' spelling variants
+- 🔍 **Smart Search** - Recognition of various Product Manager/Owner wording
 
 ## 💻 Project Files
 
@@ -42,7 +42,7 @@ SEO Jobs Hunter is a smart tool for monitoring and analyzing SEO job vacancies i
 - Contains message analysis logic
 - Extracts contacts and salaries
 
-📄 `seo_channels.py`
+📄 `product_channels.py`
 - List of monitored channels
 - Add new channels here
 
@@ -56,7 +56,7 @@ SEO Jobs Hunter is a smart tool for monitoring and analyzing SEO job vacancies i
 
 📄 `stop_words.py`
 - Words for filtering
-- Helps filter out irrelevant messages
+- Helps filter out irrelevant messages (agencies, marketing roles, freelance)
 
 ## 🔑 API Keys Setup
 
@@ -76,7 +76,7 @@ API_HASH="your_api_hash"
 PHONE="your_phone"
 OPENAI_API_KEY="your_openai_api_key"
 BOT_TOKEN="your_bot_token"
-SEO_FILE="seo_vacancies.xlsx"
+PRODUCT_FILE="product_vacancies.xlsx"
 ```
 
 ## 💻 Installation
@@ -102,13 +102,13 @@ python new_vacancies_parser_channels.py
 ## 💾 Results
 
 All found vacancies:
-- Saved to `seo_vacancies.xlsx`
+- Saved to `product_vacancies.xlsx`
 - Sent to your Telegram channel
 
 ## 🔄 How It Works
 
 1. 📱 Connects to specified Telegram channels
-2. 🔍 Searches for messages with keywords (SEO)
+2. 🔍 Searches for messages with Product Manager/Owner keywords
 3. 🤖 Analyzes text through GPT
 4. 📊 Extracts important information
 5. 📬 Sends notification if a vacancy is found
@@ -118,7 +118,7 @@ All found vacancies:
 
 All settings are stored in three files:
 - `.env` - API keys and main settings
-- `seo_channels.py` - list of channels to monitor
+- `product_channels.py` - list of channels to monitor
 - `stop_words.py` - words for filtering
 
 ## 🔒 Security

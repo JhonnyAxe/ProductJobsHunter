@@ -8,7 +8,7 @@ async def send_all_vacancies():
     """Отправка всех существующих вакансий в канал"""
     try:
         # Загружаем данные из Excel
-        df = pd.read_excel('seo_vacancies.xlsx')
+        df = pd.read_excel('product_vacancies.xlsx')
         
         # Преобразуем столбец даты в datetime
         df['date'] = pd.to_datetime(df['date'])
@@ -16,16 +16,16 @@ async def send_all_vacancies():
         # Получаем время 24 часа назад
         last_24h = pd.Timestamp.now() - pd.Timedelta(days=1)
         
-        # Фильтруем SEO вакансии за последние 24 часа
+        # Фильтруем продуктовые вакансии за последние 24 часа
         recent_vacancies = df[
-            (df['date'] >= last_24h) & 
-            (df['contains_seo_vacancy'] == True)
+            (df['date'] >= last_24h) &
+            (df['contains_product_vacancy'] == True)
         ]
         
         # Сортируем по дате (сначала старые)
         recent_vacancies = recent_vacancies.sort_values('date', ascending=True)
         
-        logger.info(f"📊 Найдено {len(recent_vacancies)} SEO вакансий за последние 24 часа")
+        logger.info(f"📊 Найдено {len(recent_vacancies)} продуктовых вакансий за последние 24 часа")
         
         # Отправляем каждую вакансию
         for index, row in recent_vacancies.iterrows():
