@@ -1,12 +1,12 @@
 """
-Скрипт для парсинга SEO вакансий из Telegram каналов с учетом ограничений API
+Скрипт для парсинга вакансий продуктовых менеджеров из Telegram-каналов с учетом ограничений API
 """
 
 import pandas as pd
 from datetime import datetime, timedelta, timezone
 from loguru import logger
 import os
-from seo_channels import SEO_CHANNELS
+from product_channels import PRODUCT_CHANNELS
 from telethon import TelegramClient, sync
 from telethon.tl.functions.messages import GetHistoryRequest
 from telethon.errors import FloodWaitError, SlowModeWaitError, ServerError
@@ -32,8 +32,8 @@ openai_client = OpenAI(
 )
 
 # Настройки файлов
-DATA_FILE = "data_seohr.xlsx"
-SEO_FILE = "seo_vacancies.xlsx"
+DATA_FILE = "data_product.xlsx"
+PRODUCT_FILE = "product_vacancies.xlsx"
 PROGRESS_FILE = "parsing_progress.json"
 
 # Настраиваем логирование
@@ -156,42 +156,38 @@ async def get_all_messages(client, channel_username, rate_limiter):
     
     return messages
 
-SYSTEM_PROMPT = """Ты HR ассистент, который анализирует вакансии SEO специалистов.
-Твоя задача - определить, является ли текст релевантной вакансией SEO специалиста.
+SYSTEM_PROMPT = """Ты HR ассистент, который анализирует вакансии продуктовых менеджеров.
+Твоя задача - определить, является ли текст релевантной вакансией Product Manager.
 
 Правила отбора вакансий:
 
 1. ОБЯЗАТЕЛЬНЫЕ КРИТЕРИИ (все должны выполняться):
-   - Это должна быть вакансия для работы в штат компании, удаленная работа подходит (не агентство, не фриланс)
-   - Вакансия должна быть для SEO-специалиста или специалиста, где SEO - основная часть работы
-   - Работа должна быть на русском языке и для русскоязычных проектов
-   - Должна быть указана конкретная компания или продукт
+   - Это должна быть вакансия Product Manager/Owner (или Head of Product) в продуктовой компании или стартапе
+   - Формат работы: штат/аутстафф или удаленка, но не разовые проекты и не фриланс
+   - Работа ориентирована на русскоязычный рынок или предполагает владение русским языком
+   - В описании есть контекст продукта/домена и зона ответственности за продукт (гипотезы, CJM, метрики, приоритезация)
 
 2. СТОП-ФАКТОРЫ (если есть хоть один - отклоняем):
-   - Вакансия для работы с adult, gambling, казино, беттинг
-   - Работа с PBN сетками или дроп доменами
-   - Линкбилдинг как основная задача
-   - Работа с буржунетом или англоязычными проектами
-   - Криптовалюты, трейдинг, web3
-   - Временная работа или проектная занятость
-   - Вакансия из агентства или для агентства
-   - Требуется английский язык выше базового уровня
+   - Роль маркетолога, SEO, таргетолога, аналитика или проектного менеджера без продуктовой ответственности
+   - Вакансии из рекрутинговых агентств без конкретного продукта
+   - Разовая/проектная работа или фриланс
+   - Основной фокус на разработке, тестировании или поддержке без product-функции
+   - Роль требует английский язык выше Upper-Intermediate и нет упоминания русскоязычных продуктов
 
 3. ДОПОЛНИТЕЛЬНЫЕ ПРАВИЛА:
-   - Если не указана зарплата - это нормально, не отклоняем
-   - Если не указан полный список требований - это нормально
-   - Если есть сомнения - отклоняем вакансию
+   - Отсутствие зарплаты или полного списка требований допустимо
+   - Если текст двусмысленный или неочевидно, что роль продуктовая, отклоняем
 
 Проанализируй текст и верни JSON:
 {
-    "is_seo": true/false,  # Подходит ли вакансия под наши критерии
+    "is_product": true/false,  # Подходит ли вакансия под наши критерии
     "reason": "string",    # Причина решения, особенно важно если отклоняем
     "contacts": "string",  # Найденные контакты (опционально)
     "salary": "string"     # Найденная зарплата (опционально)
 }"""
 
 def analyze_message(text):
-    """Анализ сообщения на наличие упоминания SEO и контактов"""
+    """Анализ сообщения на наличие product-контекста и контактов"""
     try:
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -219,40 +215,43 @@ def analyze_message(text):
         # В случае ошибки делаем более длительную паузу
         time.sleep(2)
         return {
-            "is_seo": False,
+            "is_product": False,
             "reason": f"Ошибка анализа: {str(e)}",
             "contacts": None,
             "salary": None
         }
 
-def is_seo_vacancy(text: str) -> tuple[bool, str]:
+def is_product_vacancy(text: str) -> tuple[bool, str]:
     """
-    Предварительная проверка текста на SEO вакансию
-    
+    Предварительная проверка текста на вакансию продуктового менеджера
+
     Returns:
         tuple: (прошел проверку, причина отказа если не прошел)
     """
     # Проверяем на None и пустой текст
     if text is None or not str(text).strip():
         return False, "Пустой текст"
-    
+
     # Приводим к строке и нижнему регистру
     text = str(text).lower()
-    
-    # Проверяем наличие SEO в тексте
-    if not any(keyword in text for keyword in ['seo', 'сео']):
-        return False, "Нет упоминания SEO"
-        
+
+    # Проверяем наличие ключевых слов для продуктовых ролей
+    if not any(keyword in text for keyword in [
+        'product manager', 'product-manager', 'product owner', 'product lead',
+        'продакт', 'продакт-менеджер', 'продуктовый менеджер', 'product', 'pm'
+    ]):
+        return False, "Нет упоминания product-ролей"
+
     # Проверяем на стоп-слова
     if contains_stop_words(text):
         return False, "Содержит стоп-слова"
-        
+
     return True, ""
 
 async def process_messages(messages):
     """Обработка списка сообщений"""
     all_messages = []
-    seo_messages = []
+    product_messages = []
     
     for message in messages:
         try:
@@ -270,14 +269,14 @@ async def process_messages(messages):
                 'views': views,
                 'forwards': forwards,
                 'message_link': message_link,
-                'contains_seo_vacancy': False,
+                'contains_product_vacancy': False,
                 'reason': "",
                 'contacts': None,
                 'salary': None
             }
             
             # Предварительная проверка
-            passed_initial_check, reject_reason = is_seo_vacancy(text)
+            passed_initial_check, reject_reason = is_product_vacancy(text)
             
             if not passed_initial_check:
                 message_data['reason'] = reject_reason
@@ -287,19 +286,19 @@ async def process_messages(messages):
             # Если прошли предварительную проверку, отправляем на анализ в ChatGPT
             analysis = await analyze_message(text)
             message_data.update({
-                'contains_seo_vacancy': analysis['is_seo'],
+                'contains_product_vacancy': analysis['is_product'],
                 'reason': analysis['reason'],
                 'contacts': analysis['contacts'],
                 'salary': analysis['salary']
             })
-            
-            if analysis['is_seo']:
-                seo_messages.append(message_data)
-                
-                # Сохраняем SEO вакансии сразу в основной файл
-                df_seo = pd.DataFrame(seo_messages)
-                df_seo.to_excel(SEO_FILE, index=False)
-                logger.info(f"💾 Сохранено {len(seo_messages)} SEO вакансий")
+
+            if analysis['is_product']:
+                product_messages.append(message_data)
+
+                # Сохраняем продуктовые вакансии сразу в основной файл
+                df_product = pd.DataFrame(product_messages)
+                df_product.to_excel(PRODUCT_FILE, index=False)
+                logger.info(f"💾 Сохранено {len(product_messages)} продуктовых вакансий")
             
             all_messages.append(message_data)
             
@@ -307,7 +306,7 @@ async def process_messages(messages):
             logger.error(f"❌ Ошибка при обработке сообщения: {e}")
             continue
     
-    return all_messages, seo_messages
+    return all_messages, product_messages
 
 async def save_to_excel(messages):
     """Сохранение сообщений в Excel"""
@@ -319,17 +318,17 @@ async def save_to_excel(messages):
         df = df.sort_values('date', ascending=False)
         
         # Сохраняем текущую версию
-        df.to_excel('seo_vacancies.xlsx', index=False)
-        
+        df.to_excel(PRODUCT_FILE, index=False)
+
         # Создаем бэкап с временной меткой
         timestamp = datetime.now().strftime('%Y%m%d_%H%M')
-        df.to_excel(f'seo_vacancies_{timestamp}.xlsx', index=False)
+        df.to_excel(f'product_vacancies_{timestamp}.xlsx', index=False)
         
         logger.info(f"✅ Данные сохранены в Excel")
         
         # Отправляем уведомления о новых вакансиях
         for _, row in df.iterrows():
-            if row['contains_seo_vacancy']:
+            if row['contains_product_vacancy']:
                 await send_vacancy_notification(row.to_dict())
         
     except Exception as e:
@@ -351,7 +350,7 @@ def save_progress(progress):
 def load_existing_data():
     """Загрузка существующих данных"""
     all_messages = []
-    seo_messages = []
+    product_messages = []
     
     if os.path.exists(DATA_FILE):
         try:
@@ -360,18 +359,18 @@ def load_existing_data():
         except Exception as e:
             logger.error(f"⚠️ Ошибка при загрузке {DATA_FILE}: {e}")
     
-    if os.path.exists(SEO_FILE):
+    if os.path.exists(PRODUCT_FILE):
         try:
-            df = pd.read_excel(SEO_FILE)
-            seo_messages = df.to_dict('records')
+            df = pd.read_excel(PRODUCT_FILE)
+            product_messages = df.to_dict('records')
         except Exception as e:
-            logger.error(f"⚠️ Ошибка при загрузке {SEO_FILE}: {e}")
-    
-    return all_messages, seo_messages
+            logger.error(f"⚠️ Ошибка при загрузке {PRODUCT_FILE}: {e}")
+
+    return all_messages, product_messages
 
 def clean_temp_files():
     """Удаление временных файлов"""
-    for pattern in ["data_seohr_*_temp.xlsx", "seo_vacancies_*_temp.xlsx"]:
+    for pattern in ["data_product_*_temp.xlsx", "product_vacancies_*_temp.xlsx"]:
         for file in glob.glob(pattern):
             try:
                 os.remove(file)
@@ -383,10 +382,10 @@ async def parse_all_channels(client):
     """Парсинг всех каналов из списка"""
     # Загружаем прогресс и существующие данные
     progress = load_progress()
-    all_messages, seo_messages = load_existing_data()
+    all_messages, product_messages = load_existing_data()
     rate_limiter = RateLimiter()
-    
-    for channel in SEO_CHANNELS:
+
+    for channel in PRODUCT_CHANNELS:
         # Пропускаем уже обработанные каналы
         if channel['username'] in progress['processed_channels']:
             logger.info(f"⏩ Пропускаем обработанный канал: {channel['name']}")
@@ -418,10 +417,10 @@ async def parse_all_channels(client):
                 }
                 
                 # Предварительная проверка
-                passed_initial_check, reject_reason = is_seo_vacancy(text)
+                passed_initial_check, reject_reason = is_product_vacancy(text)
                 
                 if not passed_initial_check:
-                    message_data['contains_seo_vacancy'] = False
+                    message_data['contains_product_vacancy'] = False
                     message_data['reason'] = reject_reason
                     all_messages.append(message_data)
                     continue
@@ -429,19 +428,19 @@ async def parse_all_channels(client):
                 # Если прошли предварительную проверку, отправляем на анализ в ChatGPT
                 analysis = await analyze_message(text)
                 message_data.update({
-                    'contains_seo_vacancy': analysis['is_seo'],
+                    'contains_product_vacancy': analysis['is_product'],
                     'reason': analysis['reason'],
                     'contacts': analysis['contacts'],
                     'salary': analysis['salary']
                 })
-                
-                if analysis['is_seo']:
-                    seo_messages.append(message_data)
-                    
-                    # Сохраняем SEO вакансии сразу в основной файл
-                    df_seo = pd.DataFrame(seo_messages)
-                    df_seo.to_excel(SEO_FILE, index=False)
-                    logger.info(f"💾 Сохранено {len(seo_messages)} SEO вакансий")
+
+                if analysis['is_product']:
+                    product_messages.append(message_data)
+
+                    # Сохраняем продуктовые вакансии сразу в основной файл
+                    df_product = pd.DataFrame(product_messages)
+                    df_product.to_excel(PRODUCT_FILE, index=False)
+                    logger.info(f"💾 Сохранено {len(product_messages)} продуктовых вакансий")
                 
                 all_messages.append(message_data)
                 
@@ -473,10 +472,10 @@ async def parse_all_channels(client):
     df = pd.DataFrame(all_messages)
     df.to_excel(DATA_FILE, index=False)
     logger.info(f"💾 Все сообщения сохранены в {DATA_FILE}")
-    
-    df_seo = pd.DataFrame(seo_messages)
-    df_seo.to_excel(SEO_FILE, index=False)
-    logger.info(f"💾 SEO вакансии сохранены в {SEO_FILE}")
+
+    df_product = pd.DataFrame(product_messages)
+    df_product.to_excel(PRODUCT_FILE, index=False)
+    logger.info(f"💾 Вакансии продуктовых менеджеров сохранены в {PRODUCT_FILE}")
     
     # Очищаем временные файлы
     clean_temp_files()
@@ -488,7 +487,7 @@ async def main():
     
     while retry_count < max_retries:
         try:
-            client = TelegramClient('seo_parser_session', API_ID, API_HASH)
+            client = TelegramClient('product_parser_session', API_ID, API_HASH)
             await client.start(PHONE)
             
             await parse_all_channels(client)

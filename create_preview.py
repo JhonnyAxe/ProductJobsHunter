@@ -32,7 +32,7 @@ except:
     author_font = ImageFont.load_default()
 
 # Текст
-title = "🔍 SEO Jobs Hunter"
+title = "🔍 Product Jobs Hunter"
 subtitle = "Умный парсер вакансий с GPT анализом"
 author = "by SergD (@sergei_dyshkant)"
 features = "🤖 AI-powered | 🔄 Real-time | 📊 Smart filtering"
