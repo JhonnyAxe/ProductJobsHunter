@@ -21,6 +21,9 @@ import glob
 from stop_words import contains_stop_words
 from telegram_notifier import send_vacancy_notification
 
+# Загрузка переменных окружения
+load_dotenv()
+
 # Настройки Telegram клиента
 API_ID = os.getenv('API_ID')
 API_HASH = os.getenv('API_HASH')
