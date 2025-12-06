@@ -76,6 +76,7 @@ API_HASH="your_api_hash"
 PHONE="your_phone"
 OPENAI_API_KEY="your_openai_api_key"
 BOT_TOKEN="your_bot_token"
+CHANNEL_ID="your_target_channel_id"
 PRODUCT_FILE="product_vacancies.xlsx"
 ```
 
