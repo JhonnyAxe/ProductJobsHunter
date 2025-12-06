@@ -130,7 +130,7 @@ python new_vacancies_parser_channels.py
 
 ## 📝 Лицензия
 
-MIT License © 2024 [JhonnyAxe](https://t.me/jhonnyaxe)
+MIT License © 2025 [JhonnyAxe](https://t.me/jhonnyaxe)
 
 ## 👏 Благодарности
 
