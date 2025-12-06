@@ -3,25 +3,19 @@
 """
 
 import asyncio
+import os
 from datetime import datetime, timezone, timedelta
 from loguru import logger
-import os
 import pandas as pd
 from telethon import TelegramClient, events
-from dotenv import load_dotenv
+
+from config import API_HASH, API_ID, PHONE, PRODUCT_FILE
 
 # Импорт локальных модулей
 from parse_channels import analyze_message as original_analyze_message
 from parse_channels import is_product_vacancy as original_is_product_vacancy
 from telegram_notifier import send_vacancy_notification
 from product_channels import PRODUCT_CHANNELS
-
-# Загрузка переменных окружения
-load_dotenv()
-API_ID = os.getenv('API_ID')
-API_HASH = os.getenv('API_HASH')
-PHONE = os.getenv('PHONE')
-PRODUCT_FILE = 'product_vacancies.xlsx'
 
 # Инициализация логгера
 logger.add(

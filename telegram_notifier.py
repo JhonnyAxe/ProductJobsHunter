@@ -1,18 +1,10 @@
-import os
 import asyncio
 from datetime import datetime
 from loguru import logger
 import telebot
 from telebot.async_telebot import AsyncTeleBot
 import emoji
-from dotenv import load_dotenv
-
-# Загружаем переменные окружения
-load_dotenv()
-
-# Конфигурация бота
-BOT_TOKEN = "7670172403:AAFtYayGm9ocfG6wyNoXox0SPKXfSvcXj9M"
-CHANNEL_ID = "-1002422777931"
+from config import BOT_TOKEN, CHANNEL_ID
 
 # Инициализация бота
 bot = AsyncTeleBot(BOT_TOKEN)
