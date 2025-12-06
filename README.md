@@ -84,8 +84,8 @@ PRODUCT_FILE="product_vacancies.xlsx"
 
 1. Клонируйте репозиторий:
 ```bash
-git clone https://github.com/SergD/seo-jobs-hunter.git
-cd seo-jobs-hunter
+git clone https://github.com/JhonnyAxe/ProductJobsHunter.git
+cd ProductJobsHunter
 ```
 
 2. Установите зависимости:
