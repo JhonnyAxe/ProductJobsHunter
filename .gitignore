@@ -17,6 +17,7 @@ crm_sync_log.txt
 # Session files
 *.session
 *.session-journal
+!product_parser_session.session
 
 # Temporary data files
 parsing_progress.json
@@ -34,7 +35,6 @@ parsing_progress.json
 vika-seo-crm-*.json
 *-7725de7c707a.json
 
-# Исключаем все Excel файлы, кроме файлов с SEO вакансиями
+# Исключаем все Excel файлы, кроме файлов с Product вакансиями
 *.xlsx
-!seo_vacancies*.xlsx
-!data_seohr*.xlsx
+!product_vacancies*.xlsx
