@@ -1,4 +1,5 @@
 import asyncio
+import html
 from datetime import datetime
 from loguru import logger
 from telebot.async_telebot import AsyncTeleBot
@@ -19,35 +20,30 @@ async def send_vacancy_notification(vacancy_data: dict):
         vacancy_text = vacancy_data['text'][:1000]
         if len(vacancy_data['text']) > 1000:
             vacancy_text += "..."
-        
-        # Формируем текст сообщения в HTML
+
+        # Экранируем пользовательские значения для безопасного HTML
+        escaped_vacancy_text = html.escape(vacancy_text)
+        channel_name = html.escape(vacancy_data.get('channel_name', 'Неизвестно'))
+        contacts = html.escape(vacancy_data.get('contacts') or 'не указаны')
+        salary = html.escape(vacancy_data.get('salary') or 'не указана')
+        views = html.escape(str(vacancy_data.get('views', 0)))
+        forwards = html.escape(str(vacancy_data.get('forwards', 0)))
+        message_link = html.escape(vacancy_data.get('message_link', '#'))
+
+        # Формируем текст сообщения в HTML согласно шаблону
         message = (
             f'<b>🔍 Новая продуктовая вакансия!</b>\n\n'
-            f'📌 <i>Pin: @vikapaleshko</i>\n\n'
-            f'<b>📝 Описание:</b>\n'
-            f'<pre>{vacancy_text}</pre>\n\n'
-            f'<b>💼 Канал:</b> <code>{vacancy_data["channel_name"]}</code>\n'
-            f'<b>📅 Дата публикации:</b> <code>{date_str}</code>\n'
+            f'💼 Канал: {channel_name}\n'
+            f'📅 Дата публикации: {date_str}\n'
+            f'📞 Контакты: {contacts}\n'
+            f'💰 Зарплата: {salary}\n\n'
+            f'📊 Статистика:\n'
+            f'👁 Просмотры: {views}\n'
+            f'🔄 Репосты: {forwards}\n\n'
+            f'🔗 <a href="{message_link}">Ссылка на оригинал</a>\n\n'
+            f'📝 Описание:\n\n'
+            f'{escaped_vacancy_text}'
         )
-        
-        # Добавляем контакты, если есть
-        if vacancy_data.get('contacts'):
-            message += f'<b>📞 Контакты:</b> <code>{vacancy_data["contacts"]}</code>\n'
-            
-        # Добавляем зарплату, если есть
-        if vacancy_data.get('salary'):
-            message += f'<b>💰 Зарплата:</b> <code>{vacancy_data["salary"]}</code>\n'
-            
-        # Добавляем статистику
-        message += f'\n<b>📊 Статистика:</b>\n'
-        message += f'👁 Просмотры: <code>{vacancy_data["views"]}</code>\n'
-        message += f'🔄 Репосты: <code>{vacancy_data["forwards"]}</code>\n'
-        
-        # Добавляем разделитель
-        message += '\n' + '─' * 30 + '\n'
-        
-        # Добавляем ссылку на оригинал
-        message += f'🔗 <a href="{vacancy_data["message_link"]}">Ссылка на оригинал</a>'
         
         # Отправляем сообщение в личный чат
         await bot.send_message(
