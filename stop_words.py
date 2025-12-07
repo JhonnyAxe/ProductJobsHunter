@@ -7,8 +7,6 @@ STOP_WORDS = {
     'digital-агентство',
     'беттинг',
     'букмекер',
-    'крипто',
-    'web3',
 }
 
 def contains_stop_words(text: str) -> bool:
