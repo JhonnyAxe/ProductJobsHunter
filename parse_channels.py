@@ -199,7 +199,7 @@ def analyze_message(text):
         
         # Используем синхронный вызов, так как OpenAI Python SDK не поддерживает асинхронные вызовы
         response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5-nano",
             messages=messages,
             temperature=0,
             response_format={"type": "json_object"}
