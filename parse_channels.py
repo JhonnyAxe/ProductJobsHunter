@@ -42,8 +42,8 @@ PROGRESS_FILE = "parsing_progress.json"
 # Настраиваем логирование
 logger.add("parser_log.txt", rotation="1 day")
 
-# Получаем дату год назад с учетом временной зоны
-ONE_YEAR_AGO = datetime.now(timezone.utc) - timedelta(days=365)
+# Получаем дату месяц назад с учетом временной зоны
+ONE_MONTH_AGO = datetime.now(timezone.utc) - timedelta(days=30)
 
 # Константы для ограничений API
 MAX_REQUESTS_PER_HOUR = 3000
@@ -81,7 +81,7 @@ class RateLimiter:
         self.last_request_time = time.time()
 
 async def get_all_messages(client, channel_username, rate_limiter):
-    """Получение всех сообщений из канала за последний год"""
+    """Получение всех сообщений из канала за последний месяц"""
     messages = []
     
     try:
@@ -116,11 +116,11 @@ async def get_all_messages(client, channel_username, rate_limiter):
                     # Проверяем дату последнего сообщения
                     last_message = history.messages[-1]
                     message_date = last_message.date.replace(tzinfo=timezone.utc)
-                    if message_date < ONE_YEAR_AGO:
-                        # Добавляем только сообщения за последний год
+                    if message_date < ONE_MONTH_AGO:
+                        # Добавляем только сообщения за последний месяц
                         for message in history.messages:
                             message_date = message.date.replace(tzinfo=timezone.utc)
-                            if message_date >= ONE_YEAR_AGO:
+                            if message_date >= ONE_MONTH_AGO:
                                 messages.append(message)
                         break
                     
