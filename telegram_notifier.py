@@ -1,16 +1,15 @@
 import asyncio
 from datetime import datetime
 from loguru import logger
-import telebot
 from telebot.async_telebot import AsyncTeleBot
 import emoji
-from config import BOT_TOKEN, CHANNEL_ID
+from config import BOT_TOKEN, RECIPIENT_CHAT_ID
 
 # Инициализация бота
 bot = AsyncTeleBot(BOT_TOKEN)
 
 async def send_vacancy_notification(vacancy_data: dict):
-    """Отправка уведомления о новой вакансии в канал"""
+    """Отправка уведомления о новой вакансии в личный чат с ботом"""
     try:
         # Форматируем дату
         date = datetime.strptime(vacancy_data['date'], '%Y-%m-%d %H:%M:%S')
@@ -50,15 +49,15 @@ async def send_vacancy_notification(vacancy_data: dict):
         # Добавляем ссылку на оригинал
         message += f'🔗 <a href="{vacancy_data["message_link"]}">Ссылка на оригинал</a>'
         
-        # Отправляем сообщение
+        # Отправляем сообщение в личный чат
         await bot.send_message(
-            CHANNEL_ID,
+            RECIPIENT_CHAT_ID,
             message,
             parse_mode='HTML',
             disable_web_page_preview=True
         )
-        
-        logger.info(f"✅ Уведомление о вакансии отправлено в канал")
+
+        logger.info("✅ Уведомление о вакансии отправлено в личный чат")
         
     except Exception as e:
         logger.error(f"❌ Ошибка при отправке уведомления: {e}")

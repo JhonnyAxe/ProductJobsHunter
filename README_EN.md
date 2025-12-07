@@ -76,9 +76,15 @@ API_HASH="your_api_hash"
 PHONE="your_phone"
 OPENAI_API_KEY="your_openai_api_key"
 BOT_TOKEN="your_bot_token"
-CHANNEL_ID="your_target_channel_id"
+RECIPIENT_CHAT_ID="your_target_user_chat_id"
 PRODUCT_FILE="product_vacancies.xlsx"
 ```
+
+4. **Direct message setup**
+   1. Create a bot via [@BotFather](https://t.me/BotFather) and copy the `BOT_TOKEN`.
+   2. Send any message to your bot to open the dialog.
+   3. Open `https://api.telegram.org/bot<BOT_TOKEN>/getUpdates` in a browser and find your `chat.id` in the response.
+   4. Put this `chat.id` into the `RECIPIENT_CHAT_ID` variable in `.env`.
 
 ## 💻 Installation
 
@@ -104,7 +110,7 @@ python new_vacancies_parser_channels.py
 
 All found vacancies:
 - Saved to `product_vacancies.xlsx`
-- Sent to your Telegram channel
+- Sent to your direct chat with the bot
 
 ## 🔄 How It Works
 
