@@ -76,9 +76,15 @@ API_HASH="your_api_hash"
 PHONE="your_phone"
 OPENAI_API_KEY="your_openai_api_key"
 BOT_TOKEN="your_bot_token"
-CHANNEL_ID="your_target_channel_id"
+RECIPIENT_CHAT_ID="your_target_user_chat_id"
 PRODUCT_FILE="product_vacancies.xlsx"
 ```
+
+4. **Настройка отправки в личный чат**
+   1. Создайте бота через [@BotFather](https://t.me/BotFather) и получите `BOT_TOKEN`.
+   2. Напишите вашему боту любое сообщение, чтобы открыть диалог.
+   3. Откройте в браузере `https://api.telegram.org/bot<BOT_TOKEN>/getUpdates` и найдите свой `chat.id` в ответе.
+   4. Укажите этот `chat.id` в переменной `RECIPIENT_CHAT_ID` в файле `.env`.
 
 ## 💻 Установка
 
@@ -104,7 +110,7 @@ python new_vacancies_parser_channels.py
 
 Все найденные вакансии:
 - Сохраняются в `product_vacancies.xlsx`
-- Отправляются в ваш Telegram канал
+- Отправляются в ваш личный чат с ботом
 
 ## 🔄 Как это работает
 
