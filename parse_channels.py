@@ -38,6 +38,7 @@ openai_client = OpenAI(
 DATA_FILE = "data_product.xlsx"
 PRODUCT_FILE = "product_vacancies.xlsx"
 PROGRESS_FILE = "parsing_progress.json"
+PROMPT_CACHE_KEY = "product_vacancy_analyzer_v1"
 
 # Настраиваем логирование
 logger.add("parser_log.txt", rotation="1 day")
@@ -167,16 +168,18 @@ SYSTEM_PROMPT = """Ты HR ассистент, который анализиру
 Правила отбора вакансий:
 
 1. ОБЯЗАТЕЛЬНЫЕ КРИТЕРИИ (все должны выполняться):
-   - Это должна быть вакансия Product Manager/Owner (или Head of Product) в продуктовой компании или стартапе
+   - Это должна быть вакансия Product Manager/Owner в продуктовой компании или стартапе
    - Формат работы: штат/аутстафф, гибрид или удаленка
+    - Гибрид возможен в России - в городе Москва, Казань.
+    - Удаленка возможна везде, как по всему миру, так это РФ.
    - Работа ориентирована как на русскоязычный рынок, так и на зарубежный с применением английского языка
-   - В описании есть контекст продукта/домена и зона ответственности за продукт (гипотезы, CJM, метрики, приоритезация)
 
 2. СТОП-ФАКТОРЫ (если есть хоть один - отклоняем):
    - Вакансии из рекрутинговых агентств без конкретного продукта
    - Основной фокус на разработке, тестировании или поддержке без product-функции
    - Вакансии на Middle/Middle+/Senior позиции
    - Вакансии с требуемым опытом более 3 лет
+   - Вакансии с работой с физическими продуктами
 
 3. ДОПОЛНИТЕЛЬНЫЕ ПРАВИЛА:
    - Отсутствие зарплаты или полного списка требований допустимо
@@ -193,19 +196,47 @@ SYSTEM_PROMPT = """Ты HR ассистент, который анализиру
 def analyze_message(text):
     """Анализ сообщения на наличие product-контекста и контактов"""
     try:
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": text}
-        ]
-        
-        # Используем синхронный вызов, так как OpenAI Python SDK не поддерживает асинхронные вызовы
-        response = openai_client.chat.completions.create(
+        response = openai_client.responses.create(
             model="gpt-5-nano",
-            messages=messages,
-            response_format={"type": "json_object"}
+            instructions=SYSTEM_PROMPT,
+            input=text,
+            prompt_cache_key=PROMPT_CACHE_KEY,
+            prompt_cache_retention="24h",
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "product_screening",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "is_product": {"type": "boolean"},
+                            "reason": {"type": "string"},
+                            "contacts": {"type": ["string", "null"]},
+                            "salary": {"type": ["string", "null"]},
+                        },
+                        "required": ["is_product", "reason", "contacts", "salary"],
+                        "additionalProperties": False,
+                    },
+                }
+            },
         )
-        
-        result = json.loads(response.choices[0].message.content)
+
+        raw_output = getattr(response, "output_text", None)
+        if not raw_output and getattr(response, "output", None):
+            # Fallback for unexpected SDK shapes
+            first_item = response.output[0]
+            if getattr(first_item, "content", None):
+                text_chunks = [getattr(chunk, "text", "") for chunk in first_item.content if getattr(chunk, "text", None)]
+                raw_output = "".join(text_chunks)
+
+        parsed = json.loads(raw_output) if raw_output else {}
+        result = {
+            "is_product": bool(parsed.get("is_product")),
+            "reason": parsed.get("reason", ""),
+            "contacts": parsed.get("contacts"),
+            "salary": parsed.get("salary")
+        }
         logger.debug(f"✨ Результат анализа: {result}")
         
         # Добавляем небольшую задержку между запросами
@@ -287,7 +318,7 @@ async def process_messages(messages):
                 continue
             
             # Если прошли предварительную проверку, отправляем на анализ в ChatGPT
-            analysis = await analyze_message(text)
+            analysis = analyze_message(text)
             message_data.update({
                 'contains_product_vacancy': analysis['is_product'],
                 'reason': analysis['reason'],
@@ -429,7 +460,7 @@ async def parse_all_channels(client):
                     continue
                 
                 # Если прошли предварительную проверку, отправляем на анализ в ChatGPT
-                analysis = await analyze_message(text)
+                analysis = analyze_message(text)
                 message_data.update({
                     'contains_product_vacancy': analysis['is_product'],
                     'reason': analysis['reason'],
