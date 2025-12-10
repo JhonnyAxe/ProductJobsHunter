@@ -1,4 +1,7 @@
 import asyncio
+import html
+import re
+
 from datetime import datetime
 from loguru import logger
 from telebot.async_telebot import AsyncTeleBot
@@ -8,6 +11,25 @@ from config import BOT_TOKEN, RECIPIENT_CHAT_ID
 # Инициализация бота
 bot = AsyncTeleBot(BOT_TOKEN)
 
+
+def sanitize_to_plain_text(text: str) -> str:
+    """Приводит текст к простому виду без Markdown/HTML разметки, сохраняя ссылки."""
+    if not text:
+        return ""
+
+    plain_text = html.unescape(text)
+
+    # Преобразуем markdown-ссылки в формат "текст (ссылка)"
+    plain_text = re.sub(r"\[([^\]]+)]\(([^)]+)\)", r"\1 (\2)", plain_text)
+
+    # Удаляем базовые маркеры выделения (*, _, `, ~)
+    plain_text = re.sub(r"[*_`~]+", "", plain_text)
+
+    # Удаляем HTML теги
+    plain_text = re.sub(r"<[^>]+>", "", plain_text)
+
+    return plain_text
+
 async def send_vacancy_notification(vacancy_data: dict):
     """Отправка уведомления о новой вакансии в личный чат с ботом"""
     try:
@@ -16,8 +38,9 @@ async def send_vacancy_notification(vacancy_data: dict):
         date_str = date.strftime('%d.%m.%Y %H:%M')
         
         # Форматируем текст вакансии (обрезаем если слишком длинный)
-        vacancy_text = vacancy_data['text'][:1000]
-        if len(vacancy_data['text']) > 1000:
+        sanitized_text = sanitize_to_plain_text(vacancy_data.get('text', ''))
+        vacancy_text = sanitized_text[:1000]
+        if len(sanitized_text) > 1000:
             vacancy_text += "..."
 
         channel_name = vacancy_data.get('channel_name', 'Неизвестно')
