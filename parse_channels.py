@@ -38,7 +38,6 @@ openai_client = OpenAI(
 DATA_FILE = "data_product.xlsx"
 PRODUCT_FILE = "product_vacancies.xlsx"
 PROGRESS_FILE = "parsing_progress.json"
-PROMPT_CACHE_KEY = "product_vacancy_analyzer_v1"
 
 # Настраиваем логирование
 logger.add("parser_log.txt", rotation="1 day")
@@ -168,7 +167,7 @@ SYSTEM_PROMPT = """Ты HR ассистент, который анализиру
 Правила отбора вакансий:
 
 1. ОБЯЗАТЕЛЬНЫЕ КРИТЕРИИ (все должны выполняться):
-   - Это должна быть вакансия Product Manager/Owner в продуктовой компании или стартапе
+   - Это должна быть вакансия Product Manager/Owner/AI в продуктовой компании или стартапе
    - Формат работы: штат/аутстафф, гибрид или удаленка
     - Гибрид возможен в России - в городе Москва, Казань.
     - Удаленка возможна везде, как по всему миру, так это РФ.
@@ -177,7 +176,7 @@ SYSTEM_PROMPT = """Ты HR ассистент, который анализиру
 2. СТОП-ФАКТОРЫ (если есть хоть один - отклоняем):
    - Вакансии из рекрутинговых агентств без конкретного продукта
    - Основной фокус на разработке, тестировании или поддержке без product-функции
-   - Вакансии на Middle/Middle+/Senior позиции
+   - Вакансии на Middle+/Senior позиции
    - Вакансии с требуемым опытом более 3 лет
    - Вакансии с работой с физическими продуктами
 
@@ -200,8 +199,6 @@ def analyze_message(text):
             model="gpt-5-nano",
             instructions=SYSTEM_PROMPT,
             input=text,
-            prompt_cache_key=PROMPT_CACHE_KEY,
-            prompt_cache_retention="24h",
             text={
                 "format": {
                     "type": "json_schema",
