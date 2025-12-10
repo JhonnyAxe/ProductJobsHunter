@@ -1,5 +1,4 @@
 import asyncio
-import html
 from datetime import datetime
 from loguru import logger
 from telebot.async_telebot import AsyncTeleBot
@@ -21,18 +20,16 @@ async def send_vacancy_notification(vacancy_data: dict):
         if len(vacancy_data['text']) > 1000:
             vacancy_text += "..."
 
-        # Экранируем пользовательские значения для безопасного HTML
-        escaped_vacancy_text = html.escape(vacancy_text)
-        channel_name = html.escape(vacancy_data.get('channel_name', 'Неизвестно'))
-        contacts = html.escape(vacancy_data.get('contacts') or 'не указаны')
-        salary = html.escape(vacancy_data.get('salary') or 'не указана')
-        views = html.escape(str(vacancy_data.get('views', 0)))
-        forwards = html.escape(str(vacancy_data.get('forwards', 0)))
-        message_link = html.escape(vacancy_data.get('message_link', '#'))
+        channel_name = vacancy_data.get('channel_name', 'Неизвестно')
+        contacts = vacancy_data.get('contacts') or 'не указаны'
+        salary = vacancy_data.get('salary') or 'не указана'
+        views = str(vacancy_data.get('views', 0))
+        forwards = str(vacancy_data.get('forwards', 0))
+        message_link = vacancy_data.get('message_link') or '#'
 
-        # Формируем текст сообщения в HTML согласно шаблону
+        # Формируем текст сообщения в plain-text с кликабельной ссылкой
         message = (
-            f'<b>🔍 Новая продуктовая вакансия!</b>\n\n'
+            f'🔍 Новая продуктовая вакансия!\n\n'
             f'💼 Канал: {channel_name}\n'
             f'📅 Дата публикации: {date_str}\n'
             f'📞 Контакты: {contacts}\n'
@@ -40,16 +37,15 @@ async def send_vacancy_notification(vacancy_data: dict):
             f'📊 Статистика:\n'
             f'👁 Просмотры: {views}\n'
             f'🔄 Репосты: {forwards}\n\n'
-            f'🔗 <a href="{message_link}">Ссылка на оригинал</a>\n\n'
+            f'🔗 Ссылка на оригинал: {message_link}\n\n'
             f'📝 Описание:\n\n'
-            f'{escaped_vacancy_text}'
+            f'{vacancy_text}'
         )
         
         # Отправляем сообщение в личный чат
         await bot.send_message(
             RECIPIENT_CHAT_ID,
             message,
-            parse_mode='HTML',
             disable_web_page_preview=True
         )
 
