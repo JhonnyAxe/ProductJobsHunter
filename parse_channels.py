@@ -38,7 +38,6 @@ openai_client = OpenAI(
 DATA_FILE = "data_product.xlsx"
 PRODUCT_FILE = "product_vacancies.xlsx"
 PROGRESS_FILE = "parsing_progress.json"
-PROMPT_CACHE_KEY = "product_vacancy_analyzer_v1"
 
 # Настраиваем логирование
 logger.add("parser_log.txt", rotation="1 day")
@@ -200,8 +199,6 @@ def analyze_message(text):
             model="gpt-5-nano",
             instructions=SYSTEM_PROMPT,
             input=text,
-            prompt_cache_key=PROMPT_CACHE_KEY,
-            prompt_cache_retention="24h",
             text={
                 "format": {
                     "type": "json_schema",
