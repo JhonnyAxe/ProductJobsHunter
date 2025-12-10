@@ -5,7 +5,7 @@ from loguru import logger
 import time
 
 async def send_all_vacancies():
-    """Отправка всех существующих вакансий в канал"""
+    """Отправка всех существующих вакансий в чат"""
     try:
         # Загружаем данные из Excel
         df = pd.read_excel('product_vacancies.xlsx')
